@@ -115,7 +115,7 @@ M.discard_all_changes = function()
 end
 
 ---Change the display columns for oil
----@param cols oil.ColumnSpec[]
+---@param cols (oil.ColumnSpec | oil.CustomColumn)[]
 M.set_columns = function(cols)
   require("oil.view").set_columns(cols)
 end

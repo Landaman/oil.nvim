@@ -267,11 +267,13 @@ M.update_moved_buffers = function(entry_type, src_url, dest_url)
   end
 end
 
----@param name_or_config string|table
+---@param name_or_config string|table|oil.CustomColumn
 ---@return string
----@return table|nil
+---@return table|oil.CustomColumn|nil
 M.split_config = function(name_or_config)
-  if type(name_or_config) == "string" then
+  if name_or_config["name"] ~= nil then -- Check for callback/name
+    return name_or_config["name"], name_or_config
+  elseif type(name_or_config) == "string" then
     return name_or_config, nil
   else
     if not name_or_config[1] and name_or_config["1"] then

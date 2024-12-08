@@ -10,6 +10,7 @@ local FIELD_META = constants.FIELD_META
 local all_columns = {}
 
 ---@alias oil.ColumnSpec string|{[1]: string, [string]: any}
+---@alias oil.CustomColumn {callback: function, name: string, parse: function}
 
 ---@class (exact) oil.ColumnDefinition
 ---@field render fun(entry: oil.InternalEntry, conf: nil|table): nil|oil.TextChunk
@@ -36,7 +37,7 @@ M.get_column = function(adapter, defn)
 end
 
 ---@param adapter_or_scheme string|oil.Adapter
----@return oil.ColumnSpec[]
+---@return (oil.ColumnSpec|oil.CustomColumn)[]
 M.get_supported_columns = function(adapter_or_scheme)
   local adapter
   if type(adapter_or_scheme) == "string" then
@@ -47,7 +48,7 @@ M.get_supported_columns = function(adapter_or_scheme)
   assert(adapter)
   local ret = {}
   for _, def in ipairs(config.columns) do
-    if M.get_column(adapter, def) then
+    if def.callback ~= nil or M.get_column(adapter, def) then
       table.insert(ret, def)
     end
   end
@@ -99,11 +100,18 @@ local EMPTY = { "-", "Comment" }
 M.EMPTY = EMPTY
 
 ---@param adapter oil.Adapter
----@param col_def oil.ColumnSpec
+---@param col_def oil.ColumnSpec|oil.CustomColumn
 ---@param entry oil.InternalEntry
+---@param bufnr integer
 ---@return oil.TextChunk
-M.render_col = function(adapter, col_def, entry)
+M.render_col = function(adapter, col_def, entry, bufnr)
   local name, conf = util.split_config(col_def)
+
+  -- Pass the entry and buff to the column handler
+  if col_def.callback ~= nil then
+    return col_def.callback(entry, bufnr) or EMPTY -- Return empty if the handler fails
+  end
+
   local column = M.get_column(adapter, name)
   if not column then
     -- This shouldn't be possible because supports_col should return false
@@ -144,7 +152,7 @@ end
 
 ---@param adapter oil.Adapter
 ---@param line string
----@param col_def oil.ColumnSpec
+---@param col_def oil.ColumnSpec|oil.CustomColumn
 ---@return nil|string
 ---@return nil|string
 M.parse_col = function(adapter, line, col_def)
@@ -153,6 +161,9 @@ M.parse_col = function(adapter, line, col_def)
   local empty_col, rem = line:match("^(-%s+)(.*)$")
   if empty_col then
     return nil, rem
+  end
+  if col_def.parse ~= nil then
+    return col_def.parse(line)
   end
   local column = M.get_column(adapter, name)
   if column then
