@@ -219,7 +219,7 @@ default_config.view_options.highlight_filename = nil
 ---@field trash_command? string Deprecated option that we should clean up soon
 ---@field silence_scp_warning? boolean Undocumented option
 ---@field default_file_explorer boolean
----@field columns oil.ColumnSpec[]
+---@field columns (oil.ColumnSpec | oil.CustomColumn)[]
 ---@field buf_options table<string, any>
 ---@field win_options table<string, any>
 ---@field delete_to_trash boolean

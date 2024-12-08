@@ -141,6 +141,27 @@ require("oil").setup({
     -- "permissions",
     -- "size",
     -- "mtime",
+    {
+      name = 'Custom Column'
+      callback = function(entry, bufnr)
+        local dir = require('oil').get_current_dir(bufnr)
+        local entry_name = entry[2]
+
+        -- If no dir, we can't do anything =( e.g., remote
+        if dir == nil then
+          return nil
+        end
+
+        if git_status[dir].ignored[entry_name] == true then
+          return { ' ', 'OilHidden' } -- Return column contents, highlight group
+        end
+
+        return '' -- Can also return only a string for the default HL group
+      end,
+      parse = function(line)
+        return line:match '^(.*)%s+(.*)$'
+      end,
+    }
   },
   -- Buffer-local options to use for oil buffers
   buf_options = {
